@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rbd-file-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Filesystem is the default mode used
+  # when volumeMode parameter is omitted
+  # volumeMode: Block
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-rbd-sc

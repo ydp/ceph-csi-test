@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: registry.k8s.io/e2e-test-images/nginx:1.14-4
+      volumeDevices:
+        - devicePath: /dev/rbdblock
+          name: my-volume
+      imagePullPolicy: IfNotPresent
+  volumes:
+    - name: my-volume
+      persistentVolumeClaim:
+        claimName: block-rwx-pvc
