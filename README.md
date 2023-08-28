@@ -8,12 +8,17 @@ This is useful for validating ceph-csi working proper in a new environment.
 
 ## Prerequisites
 
-* Install both rbd and cephfs plugins via rook connecting to external ceph cluster
+* Install both rbd and cephfs plugins via rook (version `v1.11.10`) connecting to external ceph cluster
   * rook needs to install in `rook-ceph` namespace
   * the cluster id is named as `rook-ceph-external`
 * Use below command to create users that is for access ceph cluster from K8s
 
 ```
+ceph auth get-or-create client.healthchecker \
+mon 'allow r, allow command quorum_status, allow command version' \
+osd 'allow rwx pool=default.rgw.meta, allow r pool=.rgw.root, allow rw pool=default.rgw.control, allow rx pool=default.rgw.log, allow x pool=default.rgw.buckets.index' \
+mgr 'allow command config'
+
 ceph auth get-or-create client.csi-rbd-node \
 mon 'profile rbd' \
 osd 'profile rbd' \
