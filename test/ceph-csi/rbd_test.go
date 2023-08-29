@@ -403,7 +403,7 @@ var _ = Describe("Rbd", func() {
 			}
 		})
 
-		It("should be able to provision volume from snapshot", Label("snapshot"), func() {
+		It("should be able to provision volume from snapshot", Label("rbd", "snapshot"), func() {
 			createRbdVolumeFromSnapshot(
 				"manifest/rbd/file-rwo-pvc.yaml",
 				"manifest/rbd/file-rwo-pod.yaml",

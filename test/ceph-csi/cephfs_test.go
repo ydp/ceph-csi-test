@@ -336,7 +336,7 @@ var _ = Describe("Cephfs", func() {
 			}
 		})
 
-		It("should be able to dynamically provision File mode RWO volume", Label("pvc"), func() {
+		It("should be able to dynamically provision File mode RWO volume", Label("cephfs", "pvc", "rwo"), func() {
 			validateCephfsRwoVolume(
 				"manifest/cephfs/rwo-pvc.yaml",
 				"manifest/cephfs/rwo-pod.yaml", f)
@@ -349,7 +349,7 @@ var _ = Describe("Cephfs", func() {
 				"manifest/cephfs/rwx-pod-another.yaml", f)
 		})
 
-		It("[clone] should be able to provision volume from another volume", Label("clone"), func() {
+		It("[clone] should be able to provision volume from another volume", Label("cephfs", "clone"), func() {
 			validateCephfsVolumeClone(
 				"manifest/cephfs/rwx-pvc.yaml",
 				"manifest/cephfs/rwx-pod.yaml",
@@ -357,7 +357,7 @@ var _ = Describe("Cephfs", func() {
 				"manifest/cephfs/pod-clone.yaml", f)
 		})
 
-		It("should be able to collect metrics of File mode volume", Label("metrics"), func() {
+		It("should be able to collect metrics of File mode volume", Label("cephfs", "metrics"), func() {
 			Skip("Not implemented")
 		})
 	})
@@ -394,7 +394,7 @@ var _ = Describe("Cephfs", func() {
 			}
 		})
 
-		It("should be able to provision volume from snapshot", Label("snapshot"), func() {
+		It("should be able to provision volume from snapshot", Label("cephfs", "snapshot"), func() {
 			createCephfsVolumeFromSnapshot(
 				"manifest/cephfs/rwx-pvc.yaml",
 				"manifest/cephfs/rwx-pod.yaml",

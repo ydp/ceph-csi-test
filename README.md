@@ -19,22 +19,22 @@ mon 'allow r, allow command quorum_status, allow command version' \
 osd 'allow rwx pool=default.rgw.meta, allow r pool=.rgw.root, allow rw pool=default.rgw.control, allow rx pool=default.rgw.log, allow x pool=default.rgw.buckets.index' \
 mgr 'allow command config'
 
-ceph auth get-or-create client.csi-rbd-node \
-mon 'profile rbd' \
-osd 'profile rbd' \
-mgr 'allow rw'
-
 ceph auth get-or-create client.csi-rbd-provisioner \
 mon 'profile rbd' \
 osd 'profile rbd' \
 mgr 'allow rw'
 
-ceph auth get-or-create client.csi-cephfs-node \
+ceph auth get-or-create client.csi-rbd-node \
+mon 'profile rbd' \
+osd 'profile rbd' \
+mgr 'allow rw'
+
+ceph auth get-or-create client.csi-cephfs-provisioner \
 mon 'allow r' \
 osd 'allow rw tag cephfs metadata=*' \
 mgr 'allow rw'
 
-ceph auth get-or-create client.csi-cephfs-provisioner \
+ceph auth get-or-create client.csi-cephfs-node \
 mon 'allow r' \
 osd 'allow rw tag cephfs *=*' \
 mgr 'allow rw' \
@@ -74,6 +74,16 @@ data:
   adminKey: QVFDOEcrVmtDQ3VNSEJBQVdzMmQxVGlrRTQ4b2NWOXAvMGovTHc9PQ==
 ```
 * The machine that running the cases needs to have access to ceph cluster, since we need to validate data from ceph side
+
+
+Using Pool detail:
+
+```
+pool 1 '.mgr' replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 1 pgp_num 1 autoscale_mode on last_change 18 flags hashpspool stripe_width 0 pg_num_max 32 pg_num_min 1 application mgr
+pool 2 'myfs-metadata' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 16 pgp_num 16 autoscale_mode on last_change 69 lfor 0/0/38 flags hashpspool stripe_width 0 compression_mode none pg_autoscale_bias 4 pg_num_min 16 recovery_priority 5 application cephfs
+pool 3 'myfs-replicated' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 282 lfor 0/0/38 flags hashpspool,selfmanaged_snaps stripe_width 0 compression_mode none application cephfs
+pool 4 'replicapool' replicated size 3 min_size 2 crush_rule 3 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 298 lfor 0/0/40 flags hashpspool,selfmanaged_snaps stripe_width 0 compression_mode none application rbd
+```
 
 Cases:
 

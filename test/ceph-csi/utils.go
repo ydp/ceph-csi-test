@@ -64,7 +64,8 @@ var (
 
 	defaultRbdPool = "replicapool"
 
-	defaultFileSystemName = "myfs"
+	defaultFileSystemName     = "cephfs"
+	defaultFileSystemDataPool = "cephfs_data"
 
 	defaultSubvolumegroup = "csi"
 
@@ -343,8 +344,9 @@ func createCephfsStorageClass(
 	sc.Parameters["csi.storage.k8s.io/node-stage-secret-namespace"] = cephCSISecretNamespace
 	sc.Parameters["csi.storage.k8s.io/node-stage-secret-name"] = cephFSNodePluginSecretName
 
+	sc.Parameters["fsName"] = defaultFileSystemName
 	if enablePool {
-		sc.Parameters["pool"] = "myfs-replicated"
+		sc.Parameters["pool"] = defaultFileSystemDataPool
 	}
 
 	// overload any parameters that were passed
