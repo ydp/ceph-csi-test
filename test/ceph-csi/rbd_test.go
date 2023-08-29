@@ -340,7 +340,7 @@ var _ = Describe("Rbd", func() {
 	f := framework.NewDefaultFramework(rbdType)
 	f.NamespacePodSecurityEnforceLevel = api.LevelPrivileged
 
-	Context("[GA] [PVC]", func() {
+	Context("[GA]", func() {
 		BeforeEach(func() {
 			if err := createRBDStorageClass(f.ClientSet, f,
 				defaultRbdSc, nil, nil, deletePolicy); err != nil {
@@ -354,26 +354,26 @@ var _ = Describe("Rbd", func() {
 			}
 		})
 
-		It("should be able to dynamically provision Block mode RWO volume", Label("pvc"), func() {
+		It("should be able to dynamically provision Block mode RWO volume", Label("rbd", "rwo", "block"), func() {
 			validateRbdRwoVolume(
 				"manifest/rbd/block-rwo-pvc.yaml",
 				"manifest/rbd/block-rwo-pod.yaml", f)
 		})
 
-		It("should be able to dynamically provision Block mode RWX volume", Label("rdb", "pvc", "rwx"), func() {
+		It("should be able to dynamically provision Block mode RWX volume", Label("rbd", "rwx", "block"), func() {
 			validateRbdRwxVolume(
 				"manifest/rbd/block-rwx-pvc.yaml",
 				"manifest/rbd/block-rwx-pod.yaml",
 				"manifest/rbd/block-rwx-pod-another.yaml", f)
 		})
 
-		It("should be able to dynamically provision File mode RWO volume", Label("pvc"), func() {
+		It("should be able to dynamically provision File mode RWO volume", Label("rbd", "rwo", "file"), func() {
 			validateRbdRwoVolume(
 				"manifest/rbd/file-rwo-pvc.yaml",
 				"manifest/rbd/file-rwo-pod.yaml", f)
 		})
 
-		It("[clone] should be able to provision File mode RWO volume from another volume", Label("clone"), func() {
+		It("should be able to provision File mode RWO volume from another volume", Label("rbd", "clone", "file"), func() {
 			validateRbdVolumeClone(
 				"manifest/rbd/file-rwo-pvc.yaml",
 				"manifest/rbd/file-rwo-pod.yaml",
@@ -381,7 +381,7 @@ var _ = Describe("Rbd", func() {
 				"manifest/rbd/file-pod-clone.yaml", f)
 		})
 
-		It("should be able to provision Block mode RWO volume from another volume", Label("rbd", "pvc", "clone"), func() {
+		It("should be able to provision Block mode RWO volume from another volume", Label("rbd", "clone", "block"), func() {
 			validateRbdVolumeClone(
 				"manifest/rbd/block-rwo-pvc.yaml",
 				"manifest/rbd/block-rwo-pod.yaml",
@@ -405,17 +405,17 @@ var _ = Describe("Rbd", func() {
 			validateStatefulset("manifest/rbd/block-statefulset.yaml", f)
 		})
 
-		It("should be able to collect metrics of Block mode volume", Label("rbd", "metrics"), func() {
+		It("should be able to collect metrics of Block mode volume", Label("rbd", "metrics", "block"), func() {
 			Skip("Not implemented")
 		})
 
-		It("should be able to collect metrics of File mode volume", Label("rbd", "metrics"), func() {
+		It("should be able to collect metrics of File mode volume", Label("rbd", "metrics", "file"), func() {
 			Skip("Not implemented")
 		})
 
 	})
 
-	Context("[GA] [snapshot]", func() {
+	Context("[GA]", func() {
 		BeforeEach(func() {
 			_, err := f.DynamicClient.Resource(schema.GroupVersionResource{
 				Group:    "apiextensions.k8s.io",

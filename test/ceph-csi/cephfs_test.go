@@ -322,7 +322,7 @@ var _ = Describe("Cephfs", func() {
 	f := framework.NewDefaultFramework(cephfsType)
 	f.NamespacePodSecurityEnforceLevel = api.LevelPrivileged
 
-	Context("[GA] [PVC]", func() {
+	Context("[GA]", func() {
 		BeforeEach(func() {
 			if err := createCephfsStorageClass(
 				f.ClientSet, f, true, nil); err != nil {
@@ -349,7 +349,7 @@ var _ = Describe("Cephfs", func() {
 				"manifest/cephfs/rwx-pod-another.yaml", f)
 		})
 
-		It("[clone] should be able to provision volume from another volume", Label("cephfs", "clone"), func() {
+		It("should be able to provision volume from another volume", Label("cephfs", "clone"), func() {
 			validateCephfsVolumeClone(
 				"manifest/cephfs/rwx-pvc.yaml",
 				"manifest/cephfs/rwx-pod.yaml",
@@ -362,7 +362,7 @@ var _ = Describe("Cephfs", func() {
 		})
 	})
 
-	Context("[GA] [snapshot]", func() {
+	Context("[GA]", func() {
 		BeforeEach(func() {
 			_, err := f.DynamicClient.Resource(schema.GroupVersionResource{
 				Group:    "apiextensions.k8s.io",
