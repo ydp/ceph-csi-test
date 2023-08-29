@@ -1,0 +1,35 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  serviceName: "nginx"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ceph-csi-nginx
+  template:
+    metadata:
+      labels:
+        app: ceph-csi-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: registry.k8s.io/e2e-test-images/nginx:1.14-4
+        ports:
+        - containerPort: 80
+          name: web
+        volumeDevices:
+        - name: www
+          devicePath: /dev/xvda
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      volumeMode: Block
+      storageClassName: csi-rbd-sc
+      resources:
+        requests:
+          storage: 1Gi

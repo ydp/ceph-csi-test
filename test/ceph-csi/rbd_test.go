@@ -308,6 +308,34 @@ func validateRbdVolumeExpansion(pvcPath, podPath string, f *framework.Framework)
 	validateRBDImageCount(f, 0, defaultRbdPool)
 }
 
+func validateEphemeralPV(podPath string, f *framework.Framework) {
+	pod, err := createPod(podPath, deployTimeout, f)
+	if err != nil {
+		framework.Failf("failed to create pod: %v", err)
+	}
+
+	validateRBDImageCount(f, 1, defaultRbdPool)
+
+	err = deletePod(pod.Name, pod.Namespace, f.ClientSet, deployTimeout)
+	if err != nil {
+		framework.Failf("failed to delete pod: %v", err)
+	}
+}
+
+func validateStatefulset(sfsPath string, f *framework.Framework) {
+	sfs, err := createStatefulset(sfsPath, deployTimeout, f)
+	if err != nil {
+		framework.Failf("failed to create statefulset: %v", err)
+	}
+
+	validateRBDImageCount(f, 2, defaultRbdPool)
+
+	err = deleteStatefulset(sfs.Name, sfs.Namespace, f.ClientSet, deployTimeout)
+	if err != nil {
+		framework.Failf("failed to delete statefulset: %v", err)
+	}
+}
+
 var _ = Describe("Rbd", func() {
 	f := framework.NewDefaultFramework(rbdType)
 	f.NamespacePodSecurityEnforceLevel = api.LevelPrivileged
@@ -353,7 +381,7 @@ var _ = Describe("Rbd", func() {
 				"manifest/rbd/file-pod-clone.yaml", f)
 		})
 
-		It("[clone] should be able to provision Block mode RWO volume from another volume", Label("clone"), func() {
+		It("should be able to provision Block mode RWO volume from another volume", Label("rbd", "pvc", "clone"), func() {
 			validateRbdVolumeClone(
 				"manifest/rbd/block-rwo-pvc.yaml",
 				"manifest/rbd/block-rwo-pod.yaml",
@@ -361,11 +389,27 @@ var _ = Describe("Rbd", func() {
 				"manifest/rbd/block-pod-clone.yaml", f)
 		})
 
-		It("should be able to collect metrics of Block mode volume", Label("metrics"), func() {
+		It("should be able to create ephemeral File mode volume", Label("rbd", "ephemeral", "file"), func() {
+			validateEphemeralPV("manifest/rbd/file-pod-ephemeral.yaml", f)
+		})
+
+		It("should be able to create ephemeral Block mode volume", Label("rbd", "ephemeral", "block"), func() {
+			validateEphemeralPV("manifest/rbd/block-pod-ephemeral.yaml", f)
+		})
+
+		It("should be able to create statefulset w/ File mode volume", Label("rbd", "statefulset", "file"), func() {
+			validateStatefulset("manifest/rbd/file-statefulset.yaml", f)
+		})
+
+		It("should be able to create statefulset w/ Block mode volume", Label("rbd", "statefulset", "block"), func() {
+			validateStatefulset("manifest/rbd/block-statefulset.yaml", f)
+		})
+
+		It("should be able to collect metrics of Block mode volume", Label("rbd", "metrics"), func() {
 			Skip("Not implemented")
 		})
 
-		It("should be able to collect metrics of File mode volume", Label("metrics"), func() {
+		It("should be able to collect metrics of File mode volume", Label("rbd", "metrics"), func() {
 			Skip("Not implemented")
 		})
 
@@ -403,13 +447,22 @@ var _ = Describe("Rbd", func() {
 			}
 		})
 
-		It("should be able to provision volume from snapshot", Label("rbd", "snapshot"), func() {
+		It("should be able to provision File volume from snapshot", Label("rbd", "snapshot", "file"), func() {
 			createRbdVolumeFromSnapshot(
 				"manifest/rbd/file-rwo-pvc.yaml",
 				"manifest/rbd/file-rwo-pod.yaml",
-				"manifest/rbd/snapshot.yaml",
-				"manifest/rbd/pvc-restore.yaml",
-				"manifest/rbd/pod-restore.yaml", f)
+				"manifest/rbd/file-snapshot.yaml",
+				"manifest/rbd/file-pvc-restore.yaml",
+				"manifest/rbd/file-pod-restore.yaml", f)
+		})
+
+		It("should be able to provision Block volume from snapshot", Label("rbd", "snapshot", "block"), func() {
+			createRbdVolumeFromSnapshot(
+				"manifest/rbd/block-rwo-pvc.yaml",
+				"manifest/rbd/block-rwo-pod.yaml",
+				"manifest/rbd/block-snapshot.yaml",
+				"manifest/rbd/block-pvc-restore.yaml",
+				"manifest/rbd/block-pod-restore.yaml", f)
 		})
 	})
 
