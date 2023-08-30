@@ -101,8 +101,8 @@ Rbd [GA] should be able to collect metrics of Block mode volume [rbd, metrics, b
 Rbd [GA] should be able to collect metrics of File mode volume [rbd, metrics, file]
 Rbd [GA] should be able to provision File volume from snapshot [rbd, snapshot, file]
 Rbd [GA] should be able to provision Block volume from snapshot [rbd, snapshot, block]
-Rbd [Beta] should be able to expand volume [rbd, beta, expansion]
-
+Rbd [Beta] should be able to expand volume [rbd, expansion, file]
+Rbd [Beta] should be able to expand volume [rbd, expansion, block]
 Cephfs [GA] should be able to dynamically provision File mode RWO volume [cephfs, pvc, rwo]
 Cephfs [GA] should be able to dynamically provision File mode RWX volume [cephfs, pvc, rwx]
 Cephfs [GA] should be able to provision volume from another volume [cephfs, clone]
@@ -114,7 +114,7 @@ Cephfs [Beta] should be able to expand volume [cephfs, beta, expansion]
 Latest result:
 
 ```
-Ran 12 of 15 Specs in 468.273 seconds
-SUCCESS! -- 12 Passed | 0 Failed | 0 Pending | 3 Skipped
+Ran 15 of 21 Specs in 922.397 seconds
+SUCCESS! -- 15 Passed | 0 Failed | 0 Pending | 6 Skipped
 PASS
 ```
