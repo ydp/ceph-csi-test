@@ -103,6 +103,9 @@ Rbd [GA] should be able to provision File volume from snapshot [rbd, snapshot, f
 Rbd [GA] should be able to provision Block volume from snapshot [rbd, snapshot, block]
 Rbd [Beta] should be able to expand volume [rbd, expansion, file]
 Rbd [Beta] should be able to expand volume [rbd, expansion, block]
+
+ElasticSearch app should be able to run ElasticSearch using ceph rbd plugin [es]
+
 Cephfs [GA] should be able to dynamically provision File mode RWO volume [cephfs, pvc, rwo]
 Cephfs [GA] should be able to dynamically provision File mode RWX volume [cephfs, pvc, rwx]
 Cephfs [GA] should be able to provision volume from another volume [cephfs, clone]
