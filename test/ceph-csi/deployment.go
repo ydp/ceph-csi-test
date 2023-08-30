@@ -8,7 +8,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
-	v1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -41,30 +40,25 @@ func execCommandInPodWithName(
 	return e2epod.ExecWithOptions(f, podOpt)
 }
 
-// loadAppDeployment loads the deployment app config and return deployment
-// object.
-func loadAppDeployment(path string) (*appsv1.Deployment, error) {
-	deploy := appsv1.Deployment{}
-	if err := unmarshal(path, &deploy); err != nil {
+// Create deployment based on manifest
+func createDeployment(path string, deployTimeout int, f *framework.Framework) (*appsv1.Deployment, error) {
+	deploy := &appsv1.Deployment{}
+	if err := unmarshal(path, deploy); err != nil {
 		return nil, err
 	}
+	deploy.Namespace = f.UniqueName
 
-	for i := range deploy.Spec.Template.Spec.Containers {
-		deploy.Spec.Template.Spec.Containers[i].ImagePullPolicy = v1.PullIfNotPresent
-	}
-
-	return &deploy, nil
-}
-
-// createDeploymentApp creates the deployment object and waits for it to be in
-// Available state.
-func createDeploymentApp(clientSet kubernetes.Interface, app *appsv1.Deployment, deployTimeout int) error {
-	_, err := clientSet.AppsV1().Deployments(app.Namespace).Create(context.TODO(), app, metav1.CreateOptions{})
+	_, err := f.ClientSet.AppsV1().Deployments(deploy.Namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create deploy: %w", err)
+		return nil, fmt.Errorf("failed to create deploy: %w", err)
 	}
 
-	return waitForDeploymentInAvailableState(clientSet, app.Name, app.Namespace, deployTimeout)
+	err = waitForDeploymentInAvailableState(f.ClientSet, deploy.Name, deploy.Namespace, deployTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to wait for deploy ready: %w", err)
+	}
+
+	return deploy, nil
 }
 
 // deleteDeploymentApp deletes the deployment object.

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment-file
+  labels:
+    app: ceph-csi-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ceph-csi-nginx
+  template:
+    metadata:
+      labels:
+        app: ceph-csi-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: registry.k8s.io/e2e-test-images/nginx:1.14-4
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /var/lib/www/html
+          name: mypvc
+      volumes:
+        - name: mypvc
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: csi-rbd-sc
+                resources:
+                  requests:
+                    storage: 1Gi

@@ -1,6 +1,8 @@
 package ceph_csi
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	scv1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +56,8 @@ const (
 	cephFSProvisionerSecretName       = "rook-csi-cephfs-provisioner"
 
 	noError = ""
+
+	KUBELET_NODE_METRICS_URI = "/api/v1/nodes/%s/proxy/metrics"
 )
 
 var (
@@ -314,6 +319,67 @@ func createRBDStorageClass(
 	})
 }
 
+func validateVolumeMetrics(deploy *appsv1.Deployment, deployTimeout int, f *framework.Framework) {
+	opts := metav1.ListOptions{
+		LabelSelector: "app=ceph-csi-nginx",
+	}
+	podList, err := f.ClientSet.CoreV1().Pods(deploy.Namespace).List(context.Background(), opts)
+	if err != nil {
+		framework.Logf("get pod list error %v", err)
+	}
+	if len(podList.Items) != int(*deploy.Spec.Replicas) {
+		framework.Logf("get pod list length %d is not %d", len(podList.Items), *deploy.Spec.Replicas)
+	}
+
+	nodeName := podList.Items[0].Spec.NodeName
+
+	for _, po := range podList.Items {
+		cmd := `echo hello000000world | tee -a /var/lib/www/html/test`
+		if strings.Contains(deploy.Name, "block") {
+			cmd = `echo abcdefghijklmnopqrstuvwxyz | dd of=/dev/xvda`
+		}
+		execCommandInContainerByPodName(
+			f,
+			cmd,
+			po.Namespace,
+			po.Name,
+			po.Spec.Containers[0].Name,
+		)
+	}
+
+	clientSet, err := kubernetes.NewForConfig(f.ClientConfig())
+	if err != nil {
+		framework.Logf("get clientset error %v", err)
+	}
+
+	ctx := context.TODO()
+	err = wait.PollUntilContextTimeout(ctx, poll, time.Duration(deployTimeout)*time.Minute, true, func(ctx context.Context) (bool, error) {
+		dat, err := clientSet.RESTClient().
+			Get().
+			AbsPath(fmt.Sprintf(KUBELET_NODE_METRICS_URI, nodeName)).
+			DoRaw(ctx)
+		if err != nil {
+			return false, fmt.Errorf("k8s raw API request error %w", err)
+		}
+		if !strings.Contains(string(dat), "kubelet_volume_stats") {
+			return false, nil
+		}
+
+		scanner := bufio.NewScanner(bytes.NewReader(dat))
+		for scanner.Scan() {
+			if strings.Contains(scanner.Text(), "kubelet_volume_stats") {
+				framework.Logf(scanner.Text())
+			}
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		framework.Failf("kubelet_volume_stats metrics NOT found")
+	}
+}
+
 // --------------------------
 
 func createCephfsStorageClass(
@@ -385,8 +451,30 @@ func createCephfsStorageClass(
 	})
 }
 
+func waitForPvDeleted(t int, f *framework.Framework) error {
+	timeout := time.Duration(t) * time.Minute
+	ctx := context.TODO()
+	framework.Logf("Waiting for pv to be deleted")
+
+	return wait.PollUntilContextTimeout(ctx, poll, timeout, true, func(ctx context.Context) (bool, error) {
+		pvList, err := f.ClientSet.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get pv: %w", err)
+		}
+
+		if len(pvList.Items) > 0 {
+			return false, nil
+		}
+
+		return true, nil
+	})
+}
+
 func validateTestVolumeSize(pod *v1.Pod, expectSizeInMb int, f *framework.Framework) error {
 	cmd := `stat -f -c '%b' /var/lib/www/html`
+	if strings.Contains(pod.Name, "block") {
+		cmd = `lsblk -n -d -r -b |grep rbd | cut -d' ' -f4`
+	}
 	stdout, stdErr, err := execCommandInContainerByPodName(
 		f,
 		cmd,
@@ -403,6 +491,9 @@ func validateTestVolumeSize(pod *v1.Pod, expectSizeInMb int, f *framework.Framew
 	}
 
 	cmd = `stat -f -c '%S' /var/lib/www/html`
+	if strings.Contains(pod.Name, "block") {
+		cmd = `lsblk -n -d -r -b |grep rbd | cut -d' ' -f4`
+	}
 	stdout, stdErr, err = execCommandInContainerByPodName(
 		f,
 		cmd,
@@ -418,8 +509,12 @@ func validateTestVolumeSize(pod *v1.Pod, expectSizeInMb int, f *framework.Framew
 		framework.Failf("failed to convert disk block size: %v", err)
 	}
 
+	if strings.Contains(pod.Name, "block") {
+		blocks = 1
+	}
 	diskSize := blockSize * blocks / 1024 / 1024
-	framework.Logf("disk size %dM", diskSize)
+
+	framework.Logf("disk size %d * %d = %dM", blockSize, blocks, diskSize)
 	if diskSize < expectSizeInMb {
 		framework.Failf("disk size %d is less than %d", diskSize, expectSizeInMb)
 	}

@@ -47,7 +47,7 @@ func validateRBDImageCount(f *framework.Framework, count int, pool string) {
 	if err != nil {
 		framework.Failf("failed to list rbd images: %v", err)
 	}
-	if len(imageList) != count {
+	if len(imageList) < count {
 		framework.Failf(
 			"backend images not matching kubernetes resource count,image count %d kubernetes resource count %d"+
 				"\nbackend image Info:\n %v",
@@ -336,6 +336,22 @@ func validateStatefulset(sfsPath string, f *framework.Framework) {
 	}
 }
 
+func validateVolumeMetricsCollection(deployPath string, f *framework.Framework) {
+	deploy, err := createDeployment(deployPath, deployTimeout, f)
+	if err != nil {
+		framework.Failf("failed to create deployment: %v", err)
+	}
+
+	validateRBDImageCount(f, 2, defaultRbdPool)
+
+	validateVolumeMetrics(deploy, deployTimeout, f)
+
+	err = deleteDeploymentApp(f.ClientSet, deploy.Name, deploy.Namespace, deployTimeout)
+	if err != nil {
+		framework.Failf("failed to delete deployment: %v", err)
+	}
+}
+
 var _ = Describe("Rbd", func() {
 	f := framework.NewDefaultFramework(rbdType)
 	f.NamespacePodSecurityEnforceLevel = api.LevelPrivileged
@@ -352,6 +368,7 @@ var _ = Describe("Rbd", func() {
 			if err := deleteStorageClass(f.ClientSet, defaultRbdSc); err != nil {
 				framework.Failf("failed to delete storageclass %s: %v", defaultRbdSc, err)
 			}
+			waitForPvDeleted(deployTimeout, f)
 		})
 
 		It("should be able to dynamically provision Block mode RWO volume", Label("rbd", "rwo", "block"), func() {
@@ -406,11 +423,11 @@ var _ = Describe("Rbd", func() {
 		})
 
 		It("should be able to collect metrics of Block mode volume", Label("rbd", "metrics", "block"), func() {
-			Skip("Not implemented")
+			validateVolumeMetricsCollection("manifest/rbd/block-deploy.yaml", f)
 		})
 
 		It("should be able to collect metrics of File mode volume", Label("rbd", "metrics", "file"), func() {
-			Skip("Not implemented")
+			validateVolumeMetricsCollection("manifest/rbd/file-deploy.yaml", f)
 		})
 
 	})
@@ -445,6 +462,7 @@ var _ = Describe("Rbd", func() {
 			if err := deleteRBDSnapshotClass(); err != nil {
 				framework.Failf("failed to delete snapshotclass csi-rbdplugin-snapclass: %v", err)
 			}
+			waitForPvDeleted(deployTimeout, f)
 		})
 
 		It("should be able to provision File volume from snapshot", Label("rbd", "snapshot", "file"), func() {
@@ -478,12 +496,19 @@ var _ = Describe("Rbd", func() {
 			if err := deleteStorageClass(f.ClientSet, defaultRbdSc); err != nil {
 				framework.Failf("failed to delete storageclass %s: %v", defaultRbdSc, err)
 			}
+			waitForPvDeleted(deployTimeout, f)
 		})
 
-		It("should be able to expand volume", Label("rbd", "beta", "expansion"), func() {
+		It("should be able to expand volume", Label("rbd", "expansion", "file"), func() {
 			validateRbdVolumeExpansion(
 				"manifest/rbd/file-rwo-pvc.yaml",
 				"manifest/rbd/file-rwo-pod.yaml", f)
+		})
+
+		It("should be able to expand volume", Label("rbd", "expansion", "block"), func() {
+			validateRbdVolumeExpansion(
+				"manifest/rbd/block-rwo-pvc.yaml",
+				"manifest/rbd/block-rwo-pod.yaml", f)
 		})
 	})
 

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment-block
+  labels:
+    app: ceph-csi-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ceph-csi-nginx
+  template:
+    metadata:
+      labels:
+        app: ceph-csi-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+        volumeDevices:
+        - name: mypvc
+          devicePath: /dev/xvda
+      volumes:
+        - name: mypvc
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                volumeMode: Block
+                storageClassName: csi-rbd-sc
+                resources:
+                  requests:
+                    storage: 1Gi
