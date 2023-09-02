@@ -61,7 +61,7 @@ spec:
         #      matchLabels:
         #        elasticsearch.k8s.elastic.co/cluster-name: elasticsearch-sample
         #        elasticsearch.k8s.elastic.co/statefulset-name: elasticsearch-sample-es-default
-    count: 1
+    count: 2
   #   # request 2Gi of persistent data storage for pods in this topology element
     volumeClaimTemplates:
     - metadata:
